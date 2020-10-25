@@ -1,0 +1,21 @@
+#!/bin/bash
+
+BR=/home/bert/board/sg220-26/buildroot
+OUTIMAGE=/tftp/img
+DTB=rtl83xx/rtl8382_cisco_sg220-26.dtb
+#DTB=rtl8382_cisco_sg220-26.dtb
+
+export ARCH=mips
+export CROSS_COMPILE=${BR}/output/host/bin/mips-buildroot-linux-uclibc-
+
+make -j8 $* || exit
+
+${CROSS_COMPILE}objcopy -O binary --remove-section=.reginfo --remove-section=.mdebug --remove-section=.comment --remove-section=.note --remove-section=.pdr --remove-section=.options --remove-section=.MIPS.options vmlinux vmlinux.bin
+
+make $DTB
+cat vmlinux.bin $DTB | gzip -9n >image
+mkimage-openwrt -A mips -O linux -T kernel -C gzip -a 0x80000000 -M 0x83800000 \
+	-e 0x80000400 -n 'linux' -d image ${OUTIMAGE}
+rm image
+
+echo "created ${OUTIMAGE}"
