@@ -45,11 +45,11 @@ static struct sk_buff *trailer_xmit(struct sk_buff *skb, struct net_device *dev)
 	trailer = skb_put(nskb, 4);
 	trailer[0] = 0x80;
 
-#ifdef CONFIG_NET_DSA_RTL838X
+#ifdef CONFIG_NET_DSA_RTL83XX
 	trailer[1] = dp->index;
 #else
 	trailer[1] = 1 << dp->index;
-#endif /* CONFIG_NET_DSA_RTL838X */
+#endif /* CONFIG_NET_DSA_RTL83XX */
 	trailer[2] = 0x10;
 	trailer[3] = 0x00;
 
@@ -67,7 +67,7 @@ static struct sk_buff *trailer_rcv(struct sk_buff *skb, struct net_device *dev,
 
 	trailer = skb_tail_pointer(skb) - 4;
 
-#ifdef CONFIG_NET_DSA_RTL838X
+#ifdef CONFIG_NET_DSA_RTL83XX
 	if (trailer[0] != 0x80 || (trailer[1] & 0xe0) != 0x00 ||
 	    (trailer[2] & 0xef) != 0x00 || trailer[3] != 0x00)
 		return NULL;

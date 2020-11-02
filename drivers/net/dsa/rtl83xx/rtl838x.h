@@ -296,10 +296,6 @@ struct rtl838x_switch_priv {
 extern struct rtl838x_soc_info soc_info;
 extern void rtl8380_sds_rst(int mac);
 
-extern int rtl838x_write_phy(u32 port, u32 page, u32 reg, u32 val);
-extern int rtl839x_write_phy(u32 port, u32 page, u32 reg, u32 val);
-extern int rtl838x_read_phy(u32 port, u32 page, u32 reg, u32 *val);
-extern int rtl839x_read_phy(u32 port, u32 page, u32 reg, u32 *val);
 extern int rtl838x_write_mmd_phy(u32 port, u32 addr, u32 reg, u32 val);
 extern int rtl838x_read_mmd_phy(u32 port, u32 addr, u32 reg, u32 *val);
 

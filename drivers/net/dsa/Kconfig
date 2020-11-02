@@ -63,6 +63,8 @@ config NET_DSA_QCA8K
 	  This enables support for the Qualcomm Atheros QCA8K Ethernet
 	  switch chips.
 
+source "drivers/net/dsa/rtl83xx/Kconfig"
+
 config NET_DSA_REALTEK_SMI
 	tristate "Realtek SMI Ethernet switch family support"
 	depends on NET_DSA
@@ -74,13 +76,6 @@ config NET_DSA_REALTEK_SMI
 	---help---
 	  This enables support for the Realtek SMI-based switch
 	  chips, currently only RTL8366RB.
-
-config NET_DSA_RTL838X
-	tristate "Realtek rtl838x switch support"
-	depends on RTL838X
-	select NET_DSA_TAG_TRAILER
-	---help---
-	  Say Y here if you want to use the Realtek rtl838x switch.
 
 config NET_DSA_SMSC_LAN9303
 	tristate

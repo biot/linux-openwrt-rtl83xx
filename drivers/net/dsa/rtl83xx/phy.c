@@ -15,7 +15,10 @@
 #include <linux/crc32.h>
 
 #include <asm/mach-rtl838x/mach-rtl838x.h>
-#include "rtl838x.h"
+#include "rtl83xx.h"
+
+extern struct mutex smi_lock;
+
 
 /* External RTL8218B and RTL8214FC IDs are identical */
 #define PHY_ID_RTL8214C		0x001cc942
@@ -189,7 +192,6 @@ int rtl839x_write_sds_phy(int phy_addr, int phy_reg, u16 v)
 static int rtl8380_read_status(struct phy_device *phydev)
 {
 	int err;
-	int phy_addr = phydev->mdio.addr;
 
 	err = genphy_read_status(phydev);
 
@@ -529,12 +531,79 @@ static int rtl8218b_ext_match_phy_device(struct phy_device *phydev)
 }
 
 
-static int rtl8380_rtl8218b_write_mmd(struct phy_device *phydev,
-				      int devnum, u16 regnum, u16 val)
+// TODO: fold into rtl8380_rtl8218b_read_mmd
+/*
+ * Read an mmd register of the PHY
+ */
+int rtl838x_read_mmd_phy(u32 port, u32 addr, u32 reg, u32 *val)
 {
-	int addr = phydev->mdio.addr;
+	u32 v;
 
-	return rtl838x_write_mmd_phy(addr, devnum, regnum, val);
+	mutex_lock(&smi_lock);
+
+	if (rtl838x_smi_wait_op(10000))
+		goto timeout;
+
+	sw_w32(1 << port, RTL838X_SMI_ACCESS_PHY_CTRL_0);
+	mdelay(10);
+
+	sw_w32_mask(0xffff0000, port << 16, RTL838X_SMI_ACCESS_PHY_CTRL_2);
+
+	v = addr << 16 | reg;
+	sw_w32(v, RTL838X_SMI_ACCESS_PHY_CTRL_3);
+
+	/* mmd-access | read | cmd-start */
+	v = 1 << 1 | 0 << 2 | 1;
+	sw_w32(v, RTL838X_SMI_ACCESS_PHY_CTRL_1);
+
+	if (rtl838x_smi_wait_op(10000))
+		goto timeout;
+
+	*val = sw_r32(RTL838X_SMI_ACCESS_PHY_CTRL_2) & 0xffff;
+
+	mutex_unlock(&smi_lock);
+	return 0;
+
+timeout:
+	mutex_unlock(&smi_lock);
+	return -ETIMEDOUT;
+}
+
+// TODO: fold into rtl8380_rtl8218b_write_mmd
+/*
+ * Write to an mmd register of the PHY
+ */
+int rtl838x_write_mmd_phy(u32 port, u32 addr, u32 reg, u32 val)
+{
+	u32 v;
+
+	pr_debug("MMD write: port %d, dev %d, reg %d, val %x\n", port, addr, reg, val);
+	val &= 0xffff;
+	mutex_lock(&smi_lock);
+
+	if (rtl838x_smi_wait_op(10000))
+		goto timeout;
+
+	sw_w32(1 << port, RTL838X_SMI_ACCESS_PHY_CTRL_0);
+	mdelay(10);
+
+	sw_w32_mask(0xffff0000, val << 16, RTL838X_SMI_ACCESS_PHY_CTRL_2);
+
+	sw_w32_mask(0x1f << 16, addr << 16, RTL838X_SMI_ACCESS_PHY_CTRL_3);
+	sw_w32_mask(0xffff, reg, RTL838X_SMI_ACCESS_PHY_CTRL_3);
+	/* mmd-access | write | cmd-start */
+	v = 1 << 1 | 1 << 2 | 1;
+	sw_w32(v, RTL838X_SMI_ACCESS_PHY_CTRL_1);
+
+	if (rtl838x_smi_wait_op(10000))
+		goto timeout;
+
+	mutex_unlock(&smi_lock);
+	return 0;
+
+timeout:
+	mutex_unlock(&smi_lock);
+	return -ETIMEDOUT;
 }
 
 static int rtl8380_rtl8218b_read_mmd(struct phy_device *phydev,
@@ -548,6 +617,14 @@ static int rtl8380_rtl8218b_read_mmd(struct phy_device *phydev,
 	if (ret)
 		return ret;
 	return val;
+}
+
+static int rtl8380_rtl8218b_write_mmd(struct phy_device *phydev,
+				      int devnum, u16 regnum, u16 val)
+{
+	int addr = phydev->mdio.addr;
+
+	return rtl838x_write_mmd_phy(addr, devnum, regnum, val);
 }
 
 static void rtl8380_rtl8214fc_media_set(int mac, bool set_fibre)
