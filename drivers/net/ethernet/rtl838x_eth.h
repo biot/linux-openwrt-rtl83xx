@@ -116,6 +116,10 @@
 #define RTL839X_RMA_CTRL_2			(0x1208)
 #define RTL839X_RMA_CTRL_3			(0x120C)
 
+/* Registers of the internal Serdes of the 8390 */
+#define RTL839X_SDS12_13_XSG0			(0xB800)
+
+
 inline int rtl838x_mac_port_ctrl(int p)
 {
 	return RTL838X_MAC_PORT_CTRL + (p << 7);
@@ -271,7 +275,5 @@ int rtl838x_write_phy(u32 port, u32 page, u32 reg, u32 val);
 int rtl838x_read_phy(u32 port, u32 page, u32 reg, u32 *val);
 int rtl839x_write_phy(u32 port, u32 page, u32 reg, u32 val);
 int rtl839x_read_phy(u32 port, u32 page, u32 reg, u32 *val);
-
-extern int rtl8380_sds_power(int mac, int val);
 
 #endif /* _RTL838X_ETH_H */

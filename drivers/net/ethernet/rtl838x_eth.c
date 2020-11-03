@@ -1113,6 +1113,70 @@ static int rtl838x_set_link_ksettings(struct net_device *ndev,
 	return phylink_ethtool_ksettings_set(priv->phylink, cmd);
 }
 
+int rtl839x_read_sds_phy(int phy_addr, int phy_reg)
+{
+	int offset = 0;
+	int reg;
+	u32 val;
+
+	if (phy_addr == 49)
+		offset = 0x100;
+
+	/* For the RTL8393 internal SerDes, we simulate a PHY ID in registers 2/3
+	 * which would otherwise read as 0
+	 */
+	if (soc_info.id == 0x8393) {
+		if (phy_reg == 2)
+			return 0x1c;
+		if (phy_reg == 3)
+			return 0x8393;
+	}
+
+	reg = (phy_reg << 1) & 0xfc;
+	val = sw_r32(RTL839X_SDS12_13_XSG0 + offset + 0x80 + reg);
+
+	if (phy_reg & 1)
+		val = (val >> 16) & 0xffff;
+	else
+		val &= 0xffff;
+	return val;
+}
+
+int rtl838x_read_sds_phy(int phy_addr, int phy_reg)
+{
+	int offset = 0;
+	u32 val;
+
+	if (phy_addr == 26)
+		offset = 0x100;
+	val = sw_r32(MAPLE_SDS4_FIB_REG0r + offset + (phy_reg << 2)) & 0xffff;
+
+	return val;
+}
+
+int rtl839x_write_sds_phy(int phy_addr, int phy_reg, u16 v)
+{
+	int offset = 0;
+	int reg;
+	u32 val;
+
+	if (phy_addr == 49)
+		offset = 0x100;
+
+	reg = (phy_reg << 1) & 0xfc;
+	val = v;
+	if (phy_reg & 1) {
+		val = val << 16;
+		sw_w32_mask(0xffff0000, val,
+			    RTL839X_SDS12_13_XSG0 + offset + 0x80 + reg);
+	} else {
+		sw_w32_mask(0xffff, val,
+			    RTL839X_SDS12_13_XSG0 + offset + 0x80 + reg);
+	}
+
+	return 0;
+}
+
 static int rtl838x_mdio_read(struct mii_bus *bus, int mii_id, int regnum)
 {
 	u32 val;
