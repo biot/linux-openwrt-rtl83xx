@@ -10,30 +10,27 @@
 extern struct rtl838x_soc_info soc_info;
 
 
-static void rtl839x_print_matrix(void)
-{
-	volatile u64 *ptr = RTL838X_SW_BASE + RTL839X_PORT_ISO_CTRL(0);
-	int i;
-
-	for (i = 0; i < 52; i += 4)
-		pr_info("> %16llx %16llx %16llx %16llx\n",
-			ptr[i + 0], ptr[i + 1], ptr[i + 2], ptr[i + 3]);
-	pr_info("CPU_PORT> %16llx\n", ptr[52]);
-}
-
 static void rtl83xx_print_matrix(void)
 {
-	unsigned volatile int *ptr = RTL838X_SW_BASE + RTL838X_PORT_ISO_CTRL(0);
+	unsigned volatile int *ptr8;
+	volatile u64 *ptr9;
 	int i;
 
-	if (soc_info.family == RTL8390_FAMILY_ID)
-		return rtl839x_print_matrix();
+	if (soc_info.family == RTL8380_FAMILY_ID) {
+		ptr8 = RTL838X_SW_BASE + RTL838X_PORT_ISO_CTRL(0);
+		for (i = 0; i < 28; i += 8)
+			pr_info("> %8x %8x %8x %8x %8x %8x %8x %8x\n",
+				ptr8[i + 0], ptr8[i + 1], ptr8[i + 2], ptr8[i + 3],
+				ptr8[i + 4], ptr8[i + 5], ptr8[i + 6], ptr8[i + 7]);
+		pr_info("CPU_PORT> %8x\n", ptr8[28]);
+	} else {
+		ptr9 = RTL838X_SW_BASE + RTL839X_PORT_ISO_CTRL(0);
+		for (i = 0; i < 52; i += 4)
+			pr_info("> %16llx %16llx %16llx %16llx\n",
+				ptr9[i + 0], ptr9[i + 1], ptr9[i + 2], ptr9[i + 3]);
+		pr_info("CPU_PORT> %16llx\n", ptr9[52]);
+	}
 
-	for (i = 0; i < 28; i += 8)
-		pr_info("> %8x %8x %8x %8x %8x %8x %8x %8x\n",
-			ptr[i + 0], ptr[i + 1], ptr[i + 2], ptr[i + 3], ptr[i + 4], ptr[i + 5],
-			ptr[i + 6], ptr[i + 7]);
-	pr_info("CPU_PORT> %8x\n", ptr[28]);
 }
 
 static void rtl83xx_init_stats(struct rtl838x_switch_priv *priv)
