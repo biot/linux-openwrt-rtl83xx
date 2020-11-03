@@ -21,7 +21,7 @@ extern struct rtl838x_soc_info soc_info;
 
 extern const struct rtl838x_reg rtl838x_reg;
 extern const struct rtl838x_reg rtl839x_reg;
-extern const struct dsa_switch_ops rtl838x_switch_ops;
+extern const struct dsa_switch_ops rtl83xx_switch_ops;
 
 DEFINE_MUTEX(smi_lock);
 
@@ -48,7 +48,7 @@ static void dump_fdb(struct rtl838x_switch_priv *priv)
 }
 
 // TODO: unused
-static void rtl838x_port_get_stp_state(struct rtl838x_switch_priv *priv, int port)
+static void rtl83xx_port_get_stp_state(struct rtl838x_switch_priv *priv, int port)
 {
 	u32 cmd, msti = 0;
 	u32 port_state[4];
@@ -88,7 +88,7 @@ static void rtl838x_port_get_stp_state(struct rtl838x_switch_priv *priv, int por
 	mutex_unlock(&priv->reg_mutex);
 }
 
-static void rtl838x_storm_enable(struct rtl838x_switch_priv *priv, int port, bool enable)
+static void rtl83xx_storm_enable(struct rtl838x_switch_priv *priv, int port, bool enable)
 {
 	// Enable Storm control for that port for UC, MC, and BC
 	if (enable)
@@ -98,7 +98,7 @@ static void rtl838x_storm_enable(struct rtl838x_switch_priv *priv, int port, boo
 }
 
 // TODO: unused
-static void __init rtl838x_storm_control_init(struct rtl838x_switch_priv *priv)
+static void __init rtl83xx_storm_control_init(struct rtl838x_switch_priv *priv)
 {
 	int i;
 
@@ -133,7 +133,7 @@ static void __init rtl838x_storm_control_init(struct rtl838x_switch_priv *priv)
 			sw_w32((1 << 18) | 0x8000, RTL838X_STORM_CTRL_PORT_UC(i));
 			sw_w32((1 << 18) | 0x8000, RTL838X_STORM_CTRL_PORT_MC(i));
 			sw_w32(0x000, RTL838X_STORM_CTRL_PORT_BC(i));
-			rtl838x_storm_enable(priv, i, true);
+			rtl83xx_storm_enable(priv, i, true);
 		}
 	}
 
@@ -186,7 +186,7 @@ int rtl83xx_dsa_phy_write(struct dsa_switch *ds, int phy_addr, int phy_reg, u16 
 		return rtl838x_write_phy(phy_addr, 0, phy_reg, val);
 }
 
-static int rtl838x_mdio_read(struct mii_bus *bus, int addr, int regnum)
+static int rtl83xx_mdio_read(struct mii_bus *bus, int addr, int regnum)
 {
 	int ret;
 	struct rtl838x_switch_priv *priv = bus->priv;
@@ -195,7 +195,7 @@ static int rtl838x_mdio_read(struct mii_bus *bus, int addr, int regnum)
 	return ret;
 }
 
-static int rtl838x_mdio_write(struct mii_bus *bus, int addr, int regnum,
+static int rtl83xx_mdio_write(struct mii_bus *bus, int addr, int regnum,
 				 u16 val)
 {
 	struct rtl838x_switch_priv *priv = bus->priv;
@@ -220,7 +220,7 @@ static int __init rtl8380_sds_power(int mac, int val)
 	return 0;
 }
 
-static int __init rtl838x_mdio_probe(struct rtl838x_switch_priv *priv)
+static int __init rtl83xx_mdio_probe(struct rtl838x_switch_priv *priv)
 {
 	struct device *dev = priv->dev;
 	struct device_node *dn, *mii_np = dev->of_node;
@@ -250,8 +250,8 @@ static int __init rtl838x_mdio_probe(struct rtl838x_switch_priv *priv)
 		return -ENOMEM;
 
 	bus->name = "rtl838x slave mii";
-	bus->read = &rtl838x_mdio_read;
-	bus->write = &rtl838x_mdio_write;
+	bus->read = &rtl83xx_mdio_read;
+	bus->write = &rtl83xx_mdio_write;
 	snprintf(bus->id, MII_BUS_ID_SIZE, "%s-%d", bus->name, dev->id);
 	bus->parent = dev;
 	priv->ds->slave_mii_bus = bus;
@@ -320,7 +320,7 @@ static int __init rtl838x_mdio_probe(struct rtl838x_switch_priv *priv)
 	return 0;
 }
 
-static int __init rtl838x_get_l2aging(struct rtl838x_switch_priv *priv)
+static int __init rtl83xx_get_l2aging(struct rtl838x_switch_priv *priv)
 {
 	int t = sw_r32(priv->r->l2_ctrl_1);
 
@@ -359,7 +359,7 @@ static int __init rtl83xx_sw_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	priv->ds->dev = dev;
 	priv->ds->priv = priv;
-	priv->ds->ops = &rtl838x_switch_ops;
+	priv->ds->ops = &rtl83xx_switch_ops;
 	priv->dev = dev;
 
 	priv->family_id = soc_info.family;
@@ -381,7 +381,7 @@ static int __init rtl83xx_sw_probe(struct platform_device *pdev)
 	}
 	pr_info("Chip version %c\n", priv->version);
 
-	err = rtl838x_mdio_probe(priv);
+	err = rtl83xx_mdio_probe(priv);
 	if (err) {
 		/* Probing fails the 1st time because of missing ethernet driver
 		 * initialization. Use this to disable traffic in case the bootloader left if on
@@ -417,7 +417,7 @@ static int __init rtl83xx_sw_probe(struct platform_device *pdev)
 	/* Enable interrupts for switch */
 	sw_w32(0x1, priv->r->imr_glb);
 
-	rtl838x_get_l2aging(priv);
+	rtl83xx_get_l2aging(priv);
 
 /*	if (priv->family_id == RTL8380_FAMILY_ID)
 		rtl838x_storm_control_init(priv); */

@@ -18,7 +18,7 @@ struct fdb_update_work {
 };
 
 #define MIB_DESC(_size, _offset, _name) {.size = _size, .offset = _offset, .name = _name}
-struct rtl838x_mib_desc {
+struct rtl83xx_mib_desc {
 	unsigned int size;
 	unsigned int offset;
 	const char *name;

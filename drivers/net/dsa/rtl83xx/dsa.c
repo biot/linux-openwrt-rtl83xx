@@ -21,7 +21,7 @@ static void rtl839x_print_matrix(void)
 	pr_info("CPU_PORT> %16llx\n", ptr[52]);
 }
 
-static void rtl838x_print_matrix(void)
+static void rtl83xx_print_matrix(void)
 {
 	unsigned volatile int *ptr = RTL838X_SW_BASE + RTL838X_PORT_ISO_CTRL(0);
 	int i;
@@ -36,7 +36,7 @@ static void rtl838x_print_matrix(void)
 	pr_info("CPU_PORT> %8x\n", ptr[28]);
 }
 
-static void rtl838x_init_stats(struct rtl838x_switch_priv *priv)
+static void rtl83xx_init_stats(struct rtl838x_switch_priv *priv)
 {
 	mutex_lock(&priv->reg_mutex);
 
@@ -52,7 +52,7 @@ static void rtl838x_init_stats(struct rtl838x_switch_priv *priv)
 	mutex_unlock(&priv->reg_mutex);
 }
 
-static void rtl838x_write_cam(int idx, u32 *r)
+static void rtl83xx_write_cam(int idx, u32 *r)
 {
 	u32 cmd = 1 << 16 /* Execute cmd */
 		| 1 << 15 /* Read */
@@ -67,7 +67,7 @@ static void rtl838x_write_cam(int idx, u32 *r)
 	do { }  while (sw_r32(RTL838X_TBL_ACCESS_L2_CTRL) & (1 << 16));
 }
 
-static u64 rtl838x_hash_key(struct rtl838x_switch_priv *priv, u64 mac, u32 vid)
+static u64 rtl83xx_hash_key(struct rtl838x_switch_priv *priv, u64 mac, u32 vid)
 {
 	if (priv->family_id == RTL8380_FAMILY_ID)
 		return rtl838x_hash(priv, mac << 12 | vid);
@@ -75,7 +75,7 @@ static u64 rtl838x_hash_key(struct rtl838x_switch_priv *priv, u64 mac, u32 vid)
 		return rtl839x_hash(priv, mac << 12 | vid);
 }
 
-static void rtl838x_write_hash(int idx, u32 *r)
+static void rtl83xx_write_hash(int idx, u32 *r)
 {
 	u32 cmd = 1 << 16 /* Execute cmd */
 		| 0 << 15 /* Write */
@@ -89,7 +89,7 @@ static void rtl838x_write_hash(int idx, u32 *r)
 	do { }  while (sw_r32(RTL838X_TBL_ACCESS_L2_CTRL) & (1 << 16));
 }
 
-static void rtl838x_enable_phy_polling(struct rtl838x_switch_priv *priv)
+static void rtl83xx_enable_phy_polling(struct rtl838x_switch_priv *priv)
 {
 	int i;
 	u64 v = 0;
@@ -111,7 +111,7 @@ static void rtl838x_enable_phy_polling(struct rtl838x_switch_priv *priv)
 		sw_w32_mask(0, 0x8000, RTL838X_SMI_GLB_CTRL);
 }
 
-const struct rtl838x_mib_desc rtl838x_mib[] = {
+const struct rtl83xx_mib_desc rtl83xx_mib[] = {
 	MIB_DESC(2, 0xf8, "ifInOctets"),
 	MIB_DESC(2, 0xf0, "ifOutOctets"),
 	MIB_DESC(1, 0xec, "dot1dTpPortInDiscards"),
@@ -163,9 +163,8 @@ const struct rtl838x_mib_desc rtl838x_mib[] = {
 
 /* DSA callbacks */
 
-// TODO: wtf is this for
-static enum dsa_tag_protocol
-rtl838x_get_tag_protocol(struct dsa_switch *ds, int port)
+
+static enum dsa_tag_protocol rtl83xx_get_tag_protocol(struct dsa_switch *ds, int port)
 {
 	/* The switch does not tag the frames, instead internally the header
 	 * structure for each packet is tagged accordingly.
@@ -173,7 +172,7 @@ rtl838x_get_tag_protocol(struct dsa_switch *ds, int port)
 	return DSA_TAG_PROTO_TRAILER;
 }
 
-static int rtl838x_setup(struct dsa_switch *ds)
+static int rtl83xx_setup(struct dsa_switch *ds)
 {
 	int i;
 	struct rtl838x_switch_priv *priv = ds->priv;
@@ -201,18 +200,18 @@ static int rtl838x_setup(struct dsa_switch *ds)
 	}
 	priv->r->set_port_reg_be(port_bitmap, priv->r->port_iso_ctrl(priv->cpu_port));
 
-	rtl838x_print_matrix();
+	rtl83xx_print_matrix();
 
-	rtl838x_init_stats(priv);
+	rtl83xx_init_stats(priv);
 
 	/* Enable MAC Polling PHY again */
-	rtl838x_enable_phy_polling(priv);
+	rtl83xx_enable_phy_polling(priv);
 	pr_info("Please wait until PHY is settled\n");
 	msleep(1000);
 	return 0;
 }
 
-static void rtl838x_phylink_validate(struct dsa_switch *ds, int port,
+static void rtl83xx_phylink_validate(struct dsa_switch *ds, int port,
 				     unsigned long *supported,
 				     struct phylink_link_state *state)
 {
@@ -266,7 +265,7 @@ static void rtl838x_phylink_validate(struct dsa_switch *ds, int port,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
 }
 
-static int rtl838x_phylink_mac_link_state(struct dsa_switch *ds, int port,
+static int rtl83xx_phylink_mac_link_state(struct dsa_switch *ds, int port,
 					  struct phylink_link_state *state)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
@@ -309,7 +308,7 @@ static int rtl838x_phylink_mac_link_state(struct dsa_switch *ds, int port,
 	return 1;
 }
 
-static void rtl838x_phylink_mac_config(struct dsa_switch *ds, int port,
+static void rtl83xx_phylink_mac_config(struct dsa_switch *ds, int port,
 					unsigned int mode,
 					const struct phylink_link_state *state)
 {
@@ -386,7 +385,7 @@ static void rtl838x_phylink_mac_config(struct dsa_switch *ds, int port,
 	sw_w32(reg, priv->r->mac_force_mode_ctrl(port));
 }
 
-static void rtl838x_phylink_mac_link_down(struct dsa_switch *ds, int port,
+static void rtl83xx_phylink_mac_link_down(struct dsa_switch *ds, int port,
 				     unsigned int mode,
 				     phy_interface_t interface)
 {
@@ -395,7 +394,7 @@ static void rtl838x_phylink_mac_link_down(struct dsa_switch *ds, int port,
 	sw_w32_mask(0x3, 0, priv->r->mac_port_ctrl(port));
 }
 
-static void rtl838x_phylink_mac_link_up(struct dsa_switch *ds, int port,
+static void rtl83xx_phylink_mac_link_up(struct dsa_switch *ds, int port,
 				   unsigned int mode,
 				   phy_interface_t interface,
 				   struct phy_device *phydev)
@@ -405,7 +404,7 @@ static void rtl838x_phylink_mac_link_up(struct dsa_switch *ds, int port,
 	sw_w32_mask(0, 0x3, priv->r->mac_port_ctrl(port));
 }
 
-static void rtl838x_get_strings(struct dsa_switch *ds,
+static void rtl83xx_get_strings(struct dsa_switch *ds,
 				int port, u32 stringset, u8 *data)
 {
 	int i;
@@ -413,21 +412,21 @@ static void rtl838x_get_strings(struct dsa_switch *ds,
 	if (stringset != ETH_SS_STATS)
 		return;
 
-	for (i = 0; i < ARRAY_SIZE(rtl838x_mib); i++)
-		strncpy(data + i * ETH_GSTRING_LEN, rtl838x_mib[i].name,
+	for (i = 0; i < ARRAY_SIZE(rtl83xx_mib); i++)
+		strncpy(data + i * ETH_GSTRING_LEN, rtl83xx_mib[i].name,
 			ETH_GSTRING_LEN);
 }
 
-static void rtl838x_get_ethtool_stats(struct dsa_switch *ds, int port,
+static void rtl83xx_get_ethtool_stats(struct dsa_switch *ds, int port,
 				      uint64_t *data)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
-	const struct rtl838x_mib_desc *mib;
+	const struct rtl83xx_mib_desc *mib;
 	int i;
 	u64 high;
 
-	for (i = 0; i < ARRAY_SIZE(rtl838x_mib); i++) {
-		mib = &rtl838x_mib[i];
+	for (i = 0; i < ARRAY_SIZE(rtl83xx_mib); i++) {
+		mib = &rtl83xx_mib[i];
 
 		data[i] = sw_r32(priv->r->stat_port_std_mib(port) + 252 - mib->offset);
 		if (mib->size == 2) {
@@ -437,15 +436,15 @@ static void rtl838x_get_ethtool_stats(struct dsa_switch *ds, int port,
 	}
 }
 
-static int rtl838x_get_sset_count(struct dsa_switch *ds, int port, int sset)
+static int rtl83xx_get_sset_count(struct dsa_switch *ds, int port, int sset)
 {
 	if (sset != ETH_SS_STATS)
 		return 0;
 
-	return ARRAY_SIZE(rtl838x_mib);
+	return ARRAY_SIZE(rtl83xx_mib);
 }
 
-static int rtl838x_port_enable(struct dsa_switch *ds, int port,
+static int rtl83xx_port_enable(struct dsa_switch *ds, int port,
 				struct phy_device *phydev)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
@@ -465,7 +464,7 @@ static int rtl838x_port_enable(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static void rtl838x_port_disable(struct dsa_switch *ds, int port)
+static void rtl83xx_port_disable(struct dsa_switch *ds, int port)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
 
@@ -483,7 +482,7 @@ static void rtl838x_port_disable(struct dsa_switch *ds, int port)
 	priv->ports[port].enable = false;
 }
 
-static int rtl838x_get_mac_eee(struct dsa_switch *ds, int port,
+static int rtl83xx_get_mac_eee(struct dsa_switch *ds, int port,
 			       struct ethtool_eee *e)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
@@ -510,7 +509,7 @@ static int rtl838x_get_mac_eee(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static int rtl838x_set_mac_eee(struct dsa_switch *ds, int port,
+static int rtl83xx_set_mac_eee(struct dsa_switch *ds, int port,
 			       struct ethtool_eee *e)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
@@ -542,7 +541,7 @@ static int rtl838x_set_mac_eee(struct dsa_switch *ds, int port,
  * Set Switch L2 Aging time, t is time in milliseconds
  * t = 0: aging is disabled
  */
-static int rtl838x_set_l2aging(struct dsa_switch *ds, u32 t)
+static int rtl83xx_set_l2aging(struct dsa_switch *ds, u32 t)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
 	int t_max = priv->family_id == RTL8380_FAMILY_ID ? 0x7fffff : 0x1FFFFF;
@@ -560,7 +559,7 @@ static int rtl838x_set_l2aging(struct dsa_switch *ds, u32 t)
 	return 0;
 }
 
-static int rtl838x_port_bridge_join(struct dsa_switch *ds, int port,
+static int rtl83xx_port_bridge_join(struct dsa_switch *ds, int port,
 					struct net_device *bridge)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
@@ -599,7 +598,7 @@ static int rtl838x_port_bridge_join(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static void rtl838x_port_bridge_leave(struct dsa_switch *ds, int port,
+static void rtl83xx_port_bridge_leave(struct dsa_switch *ds, int port,
 					struct net_device *bridge)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
@@ -635,7 +634,7 @@ static void rtl838x_port_bridge_leave(struct dsa_switch *ds, int port,
 	mutex_unlock(&priv->reg_mutex);
 }
 
-static void rtl838x_port_stp_state_set(struct dsa_switch *ds, int port,
+static void rtl83xx_port_stp_state_set(struct dsa_switch *ds, int port,
 				       u8 state)
 {
 	u32 cmd, msti = 0;
@@ -714,7 +713,7 @@ static void rtl838x_port_stp_state_set(struct dsa_switch *ds, int port,
 	mutex_unlock(&priv->reg_mutex);
 }
 
-static void rtl838x_fast_age(struct dsa_switch *ds, int port)
+static void rtl83xx_fast_age(struct dsa_switch *ds, int port)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
 	int s = priv->family_id == RTL8390_FAMILY_ID ? 2 : 0;
@@ -739,7 +738,7 @@ static void rtl838x_fast_age(struct dsa_switch *ds, int port)
 	mutex_unlock(&priv->reg_mutex);
 }
 
-static int rtl838x_vlan_filtering(struct dsa_switch *ds, int port,
+static int rtl83xx_vlan_filtering(struct dsa_switch *ds, int port,
 				  bool vlan_filtering)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
@@ -767,7 +766,7 @@ static int rtl838x_vlan_filtering(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static int rtl838x_vlan_prepare(struct dsa_switch *ds, int port,
+static int rtl83xx_vlan_prepare(struct dsa_switch *ds, int port,
 				const struct switchdev_obj_port_vlan *vlan)
 {
 	struct rtl838x_vlan_info info;
@@ -792,7 +791,7 @@ static int rtl838x_vlan_prepare(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static void rtl838x_vlan_add(struct dsa_switch *ds, int port,
+static void rtl83xx_vlan_add(struct dsa_switch *ds, int port,
 			    const struct switchdev_obj_port_vlan *vlan)
 {
 	struct rtl838x_vlan_info info;
@@ -839,7 +838,7 @@ static void rtl838x_vlan_add(struct dsa_switch *ds, int port,
 	mutex_unlock(&priv->reg_mutex);
 }
 
-static int rtl838x_vlan_del(struct dsa_switch *ds, int port,
+static int rtl83xx_vlan_del(struct dsa_switch *ds, int port,
 			    const struct switchdev_obj_port_vlan *vlan)
 {
 	struct rtl838x_vlan_info info;
@@ -881,12 +880,12 @@ static int rtl838x_vlan_del(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static int rtl838x_port_fdb_add(struct dsa_switch *ds, int port,
+static int rtl83xx_port_fdb_add(struct dsa_switch *ds, int port,
 				const unsigned char *addr, u16 vid)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
 	u64 mac = ether_addr_to_u64(addr);
-	u32 key = rtl838x_hash_key(priv, mac, vid);
+	u32 key = rtl83xx_hash_key(priv, mac, vid);
 	struct rtl838x_l2_entry e;
 	u32 r[3];
 	u64 entry;
@@ -909,7 +908,7 @@ static int rtl838x_port_fdb_add(struct dsa_switch *ds, int port,
 		r[0] |= vid;
 		r[1] = mac >> 16;
 		r[2] = (mac & 0xffff) << 12; /* rvid = 0 */
-		rtl838x_write_hash(idx, r);
+		rtl83xx_write_hash(idx, r);
 		goto out;
 	}
 
@@ -931,7 +930,7 @@ static int rtl838x_port_fdb_add(struct dsa_switch *ds, int port,
 		r[0] |= vid;
 		r[1] = mac >> 16;
 		r[2] = (mac & 0xffff) << 12; /* rvid = 0 */
-		rtl838x_write_cam(idx, r);
+		rtl83xx_write_cam(idx, r);
 		goto out;
 	}
 	err = -ENOTSUPP;
@@ -940,12 +939,12 @@ out:
 	return err;
 }
 
-static int rtl838x_port_fdb_del(struct dsa_switch *ds, int port,
+static int rtl83xx_port_fdb_del(struct dsa_switch *ds, int port,
 			   const unsigned char *addr, u16 vid)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
 	u64 mac = ether_addr_to_u64(addr);
-	u32 key = rtl838x_hash_key(priv, mac, vid);
+	u32 key = rtl83xx_hash_key(priv, mac, vid);
 	struct rtl838x_l2_entry e;
 	u32 r[3];
 	u64 entry;
@@ -965,7 +964,7 @@ static int rtl838x_port_fdb_del(struct dsa_switch *ds, int port,
 
 	if (idx >= 0) {
 		r[0] = r[1] = r[2] = 0;
-		rtl838x_write_hash(idx, r);
+		rtl83xx_write_hash(idx, r);
 		goto out;
 	}
 
@@ -979,7 +978,7 @@ static int rtl838x_port_fdb_del(struct dsa_switch *ds, int port,
 	}
 	if (idx >= 0) {
 		r[0] = r[1] = r[2] = 0;
-		rtl838x_write_cam(idx, r);
+		rtl83xx_write_cam(idx, r);
 		goto out;
 	}
 	err = -ENOENT;
@@ -988,7 +987,7 @@ out:
 	return err;
 }
 
-static int rtl838x_port_fdb_dump(struct dsa_switch *ds, int port,
+static int rtl83xx_port_fdb_dump(struct dsa_switch *ds, int port,
 				 dsa_fdb_dump_cb_t *cb, void *data)
 {
 	struct rtl838x_l2_entry e;
@@ -1030,7 +1029,7 @@ static int rtl838x_port_fdb_dump(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static int rtl838x_port_mirror_add(struct dsa_switch *ds, int port,
+static int rtl83xx_port_mirror_add(struct dsa_switch *ds, int port,
 				   struct dsa_mall_mirror_tc_entry *mirror,
 				   bool ingress)
 {
@@ -1084,7 +1083,7 @@ static int rtl838x_port_mirror_add(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static void rtl838x_port_mirror_del(struct dsa_switch *ds, int port,
+static void rtl83xx_port_mirror_del(struct dsa_switch *ds, int port,
 				    struct dsa_mall_mirror_tc_entry *mirror)
 {
 	int group = 0;
@@ -1115,45 +1114,45 @@ static void rtl838x_port_mirror_del(struct dsa_switch *ds, int port,
 	mutex_unlock(&priv->reg_mutex);
 }
 
-const struct dsa_switch_ops rtl838x_switch_ops = {
-	.get_tag_protocol	= rtl838x_get_tag_protocol,
-	.setup			= rtl838x_setup,
+const struct dsa_switch_ops rtl83xx_switch_ops = {
+	.get_tag_protocol	= rtl83xx_get_tag_protocol,
+	.setup			= rtl83xx_setup,
 
 	.phy_read		= rtl83xx_dsa_phy_read,
 	.phy_write		= rtl83xx_dsa_phy_write,
 
-	.phylink_validate	= rtl838x_phylink_validate,
-	.phylink_mac_link_state	= rtl838x_phylink_mac_link_state,
-	.phylink_mac_config	= rtl838x_phylink_mac_config,
-	.phylink_mac_link_down	= rtl838x_phylink_mac_link_down,
-	.phylink_mac_link_up	= rtl838x_phylink_mac_link_up,
+	.phylink_validate	= rtl83xx_phylink_validate,
+	.phylink_mac_link_state	= rtl83xx_phylink_mac_link_state,
+	.phylink_mac_config	= rtl83xx_phylink_mac_config,
+	.phylink_mac_link_down	= rtl83xx_phylink_mac_link_down,
+	.phylink_mac_link_up	= rtl83xx_phylink_mac_link_up,
 
-	.get_strings		= rtl838x_get_strings,
-	.get_ethtool_stats	= rtl838x_get_ethtool_stats,
-	.get_sset_count		= rtl838x_get_sset_count,
+	.get_strings		= rtl83xx_get_strings,
+	.get_ethtool_stats	= rtl83xx_get_ethtool_stats,
+	.get_sset_count		= rtl83xx_get_sset_count,
 
-	.port_enable		= rtl838x_port_enable,
-	.port_disable		= rtl838x_port_disable,
+	.port_enable		= rtl83xx_port_enable,
+	.port_disable		= rtl83xx_port_disable,
 
-	.get_mac_eee		= rtl838x_get_mac_eee,
-	.set_mac_eee		= rtl838x_set_mac_eee,
+	.get_mac_eee		= rtl83xx_get_mac_eee,
+	.set_mac_eee		= rtl83xx_set_mac_eee,
 
-	.set_ageing_time	= rtl838x_set_l2aging,
-	.port_bridge_join	= rtl838x_port_bridge_join,
-	.port_bridge_leave	= rtl838x_port_bridge_leave,
-	.port_stp_state_set	= rtl838x_port_stp_state_set,
-	.port_fast_age		= rtl838x_fast_age,
+	.set_ageing_time	= rtl83xx_set_l2aging,
+	.port_bridge_join	= rtl83xx_port_bridge_join,
+	.port_bridge_leave	= rtl83xx_port_bridge_leave,
+	.port_stp_state_set	= rtl83xx_port_stp_state_set,
+	.port_fast_age		= rtl83xx_fast_age,
 
-	.port_vlan_filtering	= rtl838x_vlan_filtering,
-	.port_vlan_prepare	= rtl838x_vlan_prepare,
-	.port_vlan_add		= rtl838x_vlan_add,
-	.port_vlan_del		= rtl838x_vlan_del,
+	.port_vlan_filtering	= rtl83xx_vlan_filtering,
+	.port_vlan_prepare	= rtl83xx_vlan_prepare,
+	.port_vlan_add		= rtl83xx_vlan_add,
+	.port_vlan_del		= rtl83xx_vlan_del,
 
-	.port_fdb_add		= rtl838x_port_fdb_add,
-	.port_fdb_del		= rtl838x_port_fdb_del,
-	.port_fdb_dump		= rtl838x_port_fdb_dump,
+	.port_fdb_add		= rtl83xx_port_fdb_add,
+	.port_fdb_del		= rtl83xx_port_fdb_del,
+	.port_fdb_dump		= rtl83xx_port_fdb_dump,
 
-	.port_mirror_add	= rtl838x_port_mirror_add,
-	.port_mirror_del	= rtl838x_port_mirror_del,
+	.port_mirror_add	= rtl83xx_port_mirror_add,
+	.port_mirror_del	= rtl83xx_port_mirror_del,
 };
 
