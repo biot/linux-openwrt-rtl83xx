@@ -4,13 +4,6 @@
  * Copyright (C) 2020 B. Koblitz
  */
 
-#include <linux/delay.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_mdio.h>
-#include <linux/phy.h>
-#include <linux/platform_device.h>
 #include <linux/firmware.h>
 #include <linux/crc32.h>
 

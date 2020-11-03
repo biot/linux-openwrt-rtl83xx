@@ -1,18 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
-#include <linux/etherdevice.h>
-#include <linux/iopoll.h>
-#include <linux/mdio.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
 #include <linux/of_mdio.h>
-#include <linux/of_net.h>
 #include <linux/of_platform.h>
-#include <linux/phylink.h>
-#include <linux/phy_fixed.h>
-#include <net/dsa.h>
-#include <net/switchdev.h>
 
 #include <asm/mach-rtl838x/mach-rtl838x.h>
 #include "rtl83xx.h"
