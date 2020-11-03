@@ -7,6 +7,9 @@
 #include "rtl83xx.h"
 
 
+extern struct rtl838x_soc_info soc_info;
+
+
 static void rtl839x_print_matrix(void)
 {
 	volatile u64 *ptr = RTL838X_SW_BASE + RTL839X_PORT_ISO_CTRL(0);

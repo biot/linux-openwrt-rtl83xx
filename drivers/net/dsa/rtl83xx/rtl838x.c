@@ -404,11 +404,6 @@ void rtl8380_get_version(struct rtl838x_switch_priv *priv)
 	u32 rw_save, info_save;
 	u32 info;
 
-	if (priv->id)
-		pr_debug("SoC ID: %4x: %s\n", priv->id, soc_info.name);
-	else
-		pr_err("Unknown chip id (%04x)\n", priv->id);
-
 	rw_save = sw_r32(RTL838X_INT_RW_CTRL);
 	sw_w32(rw_save | 0x3, RTL838X_INT_RW_CTRL);
 

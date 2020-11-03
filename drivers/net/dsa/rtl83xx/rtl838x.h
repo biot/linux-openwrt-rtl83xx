@@ -293,12 +293,6 @@ struct rtl838x_switch_priv {
 	struct dentry *dbgfs_dir;
 };
 
-extern struct rtl838x_soc_info soc_info;
-extern void rtl8380_sds_rst(int mac);
-
-extern int rtl838x_write_mmd_phy(u32 port, u32 addr, u32 reg, u32 val);
-extern int rtl838x_read_mmd_phy(u32 port, u32 addr, u32 reg, u32 *val);
-
 void rtl838x_dbgfs_init(struct rtl838x_switch_priv *priv);
 
 #endif /* _RTL838X_H */

@@ -17,6 +17,7 @@
 #include <asm/mach-rtl838x/mach-rtl838x.h>
 #include "rtl83xx.h"
 
+extern struct rtl838x_soc_info soc_info;
 extern struct mutex smi_lock;
 
 
