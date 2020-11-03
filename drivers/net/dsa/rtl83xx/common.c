@@ -438,26 +438,26 @@ static int rtl83xx_sw_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static const struct of_device_id rtl838x_switch_of_ids[] = {
-	{ .compatible = "realtek,rtl838x-switch"},
+static const struct of_device_id rtl83xx_switch_of_ids[] = {
+	{ .compatible = "realtek,rtl83xx-switch"},
 	{ /* sentinel */ }
 };
 
 
-MODULE_DEVICE_TABLE(of, rtl838x_switch_of_ids);
+MODULE_DEVICE_TABLE(of, rtl83xx_switch_of_ids);
 
-static struct platform_driver rtl838x_switch_driver = {
+static struct platform_driver rtl83xx_switch_driver = {
 	.probe = rtl83xx_sw_probe,
 	.remove = rtl83xx_sw_remove,
 	.driver = {
-		.name = "rtl838x-switch",
+		.name = "rtl83xx-switch",
 		.pm = NULL,
-		.of_match_table = rtl838x_switch_of_ids,
+		.of_match_table = rtl83xx_switch_of_ids,
 	},
 };
 
-module_platform_driver(rtl838x_switch_driver);
+module_platform_driver(rtl83xx_switch_driver);
 
 MODULE_AUTHOR("B. Koblitz");
-MODULE_DESCRIPTION("RTL838X SoC Switch Driver");
+MODULE_DESCRIPTION("RTL83XX SoC Switch Driver");
 MODULE_LICENSE("GPL");

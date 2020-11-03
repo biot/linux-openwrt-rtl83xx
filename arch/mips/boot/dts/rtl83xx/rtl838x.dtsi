@@ -104,6 +104,6 @@
 	switch0: switch@bb000000 {
 		status = "okay";
 
-		compatible = "realtek,rtl838x-switch";
+		compatible = "realtek,rtl83xx-switch";
 	};
 };
