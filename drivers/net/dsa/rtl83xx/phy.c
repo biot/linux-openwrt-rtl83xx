@@ -156,9 +156,9 @@ static int rtl8393_read_status(struct phy_device *phydev)
 	return err;
 }
 
-static struct fw_header *
-rtl838x_request_fw(struct phy_device *phydev, const struct firmware *fw,
-		   const char *name)
+static struct fw_header *rtl838x_request_fw(struct phy_device *phydev,
+					    const struct firmware *fw,
+					    const char *name)
 {
 	struct device *dev = &phydev->mdio.dev;
 	int err;

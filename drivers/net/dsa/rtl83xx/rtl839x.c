@@ -378,6 +378,7 @@ irqreturn_t rtl839x_switch_irq(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+// TODO: unused
 int rtl8390_sds_power(int mac, int val)
 {
 	u32 offset = (mac == 48) ? 0x0 : 0x100;
@@ -505,4 +506,3 @@ void rtl839x_vlan_profile_dump(int index)
 		index, profile & 1, (profile >> 1) & 0xfff, (profile >> 13) & 0xfff,
 		(profile1) & 0xfff);
 }
-
