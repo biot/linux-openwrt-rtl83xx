@@ -26,22 +26,6 @@ extern const struct dsa_switch_ops rtl838x_switch_ops;
 DEFINE_MUTEX(smi_lock);
 
 
-static int read_phy(u32 port, u32 page, u32 reg, u32 *val)
-{
-	if (soc_info.family == RTL8390_FAMILY_ID)
-		return rtl839x_read_phy(port, page, reg, val);
-	else
-		return rtl838x_read_phy(port, page, reg, val);
-}
-
-static int write_phy(u32 port, u32 page, u32 reg, u32 val)
-{
-	if (soc_info.family == RTL8390_FAMILY_ID)
-		return rtl839x_write_phy(port, page, reg, val);
-	else
-		return rtl838x_write_phy(port, page, reg, val);
-}
-
 // TODO: unused
 static void dump_fdb(struct rtl838x_switch_priv *priv)
 {
@@ -177,7 +161,10 @@ int rtl83xx_dsa_phy_read(struct dsa_switch *ds, int phy_addr, int phy_reg)
 		return val;
 	}
 
-	read_phy(phy_addr, 0, phy_reg, &val);
+	if (soc_info.family == RTL8390_FAMILY_ID)
+		rtl839x_read_phy(phy_addr, 0, phy_reg, &val);
+	else
+		rtl838x_read_phy(phy_addr, 0, phy_reg, &val);
 	return val;
 }
 
@@ -193,7 +180,10 @@ int rtl83xx_dsa_phy_write(struct dsa_switch *ds, int phy_addr, int phy_reg, u16 
 		sw_w32(val, MAPLE_SDS4_FIB_REG0r + offset + (phy_reg << 2));
 		return 0;
 	}
-	return write_phy(phy_addr, 0, phy_reg, val);
+	if (soc_info.family == RTL8390_FAMILY_ID)
+		return rtl839x_write_phy(phy_addr, 0, phy_reg, val);
+	else
+		return rtl838x_write_phy(phy_addr, 0, phy_reg, val);
 }
 
 static int rtl838x_mdio_read(struct mii_bus *bus, int addr, int regnum)
