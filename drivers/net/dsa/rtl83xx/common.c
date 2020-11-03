@@ -203,6 +203,18 @@ static int rtl83xx_mdio_write(struct mii_bus *bus, int addr, int regnum,
 	return rtl83xx_dsa_phy_write(priv->ds, addr, regnum, val);
 }
 
+static void rtl8380_sds_rst(int mac)
+{
+	u32 offset = (mac == 24) ? 0 : 0x100;
+
+	sw_w32_mask(1 << 11, 0, RTL8380_SDS4_FIB_REG0 + offset);
+	sw_w32_mask(0x3, 0, RTL838X_SDS4_REG28 + offset);
+	sw_w32_mask(0x3, 0x3, RTL838X_SDS4_REG28 + offset);
+	sw_w32_mask(0, 0x1 << 6, RTL838X_SDS4_DUMMY0 + offset);
+	sw_w32_mask(0x1 << 6, 0, RTL838X_SDS4_DUMMY0 + offset);
+	pr_info("SERDES reset: %d\n", mac);
+}
+
 static int __init rtl8380_sds_power(int mac, int val)
 {
 	u32 mode = (val == 1) ? 0x4 : 0x9;

@@ -111,18 +111,6 @@ static void rtl8380_phy_reset(int mac)
 	write_phy(mac, 0, 0, val | (0x1 << 15));
 }
 
-void rtl8380_sds_rst(int mac)
-{
-	u32 offset = (mac == 24) ? 0 : 0x100;
-
-	sw_w32_mask(1 << 11, 0, RTL8380_SDS4_FIB_REG0 + offset);
-	sw_w32_mask(0x3, 0, RTL838X_SDS4_REG28 + offset);
-	sw_w32_mask(0x3, 0x3, RTL838X_SDS4_REG28 + offset);
-	sw_w32_mask(0, 0x1 << 6, RTL838X_SDS4_DUMMY0 + offset);
-	sw_w32_mask(0x1 << 6, 0, RTL838X_SDS4_DUMMY0 + offset);
-	pr_info("SERDES reset: %d\n", mac);
-}
-
 /* Read the link and speed status of the 2 internal SGMII/1000Base-X
  * ports of the RTL838x SoCs
  */

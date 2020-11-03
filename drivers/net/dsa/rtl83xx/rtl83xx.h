@@ -24,7 +24,6 @@ struct rtl83xx_mib_desc {
 	const char *name;
 };
 
-void rtl8380_sds_rst(int mac);
 int rtl838x_smi_wait_op(int timeout);
 
 u32 rtl838x_hash(struct rtl838x_switch_priv *priv, u64 seed);
