@@ -64,7 +64,7 @@ static int write_phy(u32 port, u32 page, u32 reg, u32 val)
 		return rtl838x_write_phy(port, page, reg, val);
 }
 
-static void rtl8380_int_phy_on_off(int mac, bool on)
+static void int_phy_on_off(int mac, bool on)
 {
 	u32 val;
 
@@ -75,7 +75,7 @@ static void rtl8380_int_phy_on_off(int mac, bool on)
 		write_phy(mac, 0, 0, val | (1 << 11));
 }
 
-static void rtl8380_rtl8214fc_on_off(int mac, bool on)
+static void rtl8214fc_on_off(int mac, bool on)
 {
 	u32 val;
 
@@ -96,7 +96,7 @@ static void rtl8380_rtl8214fc_on_off(int mac, bool on)
 		write_phy(mac, 0xa40, 16, val | (1 << 11));
 }
 
-static void rtl8380_phy_reset(int mac)
+static void phy_reset(int mac)
 {
 	u32 val;
 
@@ -259,9 +259,9 @@ static int rtl8380_configure_int_rtl8218b(struct phy_device *phydev)
 
 	read_phy(mac, 0, 0, &val);
 	if (val & (1 << 11))
-		rtl8380_int_phy_on_off(mac, true);
+		int_phy_on_off(mac, true);
 	else
-		rtl8380_phy_reset(mac);
+		phy_reset(mac);
 	msleep(100);
 
 	/* Ready PHY for patch */
@@ -351,9 +351,9 @@ static int rtl8380_configure_ext_rtl8218b(struct phy_device *phydev)
 
 	read_phy(mac, 0, 0, &val);
 	if (val & (1 << 11))
-		rtl8380_int_phy_on_off(mac, true);
+		int_phy_on_off(mac, true);
 	else
-		rtl8380_phy_reset(mac);
+		phy_reset(mac);
 	msleep(100);
 
 	/* Get Chip revision */
@@ -448,12 +448,10 @@ static int rtl8218b_ext_match_phy_device(struct phy_device *phydev)
 		return phydev->phy_id == PHY_ID_RTL8218B_E;
 }
 
-
-// TODO: fold into rtl8380_rtl8218b_read_mmd
 /*
  * Read an mmd register of the PHY
  */
-static int rtl838x_read_mmd_phy(u32 port, u32 addr, u32 reg, u32 *val)
+static int rtl83xx_read_mmd_phy(u32 port, u32 addr, u32 reg, u32 *val)
 {
 	u32 v;
 
@@ -487,7 +485,6 @@ timeout:
 	return -ETIMEDOUT;
 }
 
-// TODO: fold into rtl8380_rtl8218b_write_mmd
 /*
  * Write to an mmd register of the PHY
  */
@@ -524,20 +521,20 @@ timeout:
 	return -ETIMEDOUT;
 }
 
-static int rtl8380_rtl8218b_read_mmd(struct phy_device *phydev,
+static int rtl8218b_read_mmd(struct phy_device *phydev,
 				     int devnum, u16 regnum)
 {
 	int ret;
 	u32 val;
 	int addr = phydev->mdio.addr;
 
-	ret = rtl838x_read_mmd_phy(addr, devnum, regnum, &val);
+	ret = rtl83xx_read_mmd_phy(addr, devnum, regnum, &val);
 	if (ret)
 		return ret;
 	return val;
 }
 
-static int rtl8380_rtl8218b_write_mmd(struct phy_device *phydev,
+static int rtl8218b_write_mmd(struct phy_device *phydev,
 				      int devnum, u16 regnum, u16 val)
 {
 	int addr = phydev->mdio.addr;
@@ -617,7 +614,7 @@ static bool rtl8380_rtl8214fc_media_is_fibre(int mac)
 	return true;
 }
 
-static int rtl8380_rtl8214fc_set_port(struct phy_device *phydev, int port)
+static int rtl8214fc_set_port(struct phy_device *phydev, int port)
 {
 	bool is_fibre = (port == PORT_FIBRE ? true : false);
 	int addr = phydev->mdio.addr;
@@ -628,7 +625,7 @@ static int rtl8380_rtl8214fc_set_port(struct phy_device *phydev, int port)
 	return 0;
 }
 
-static int rtl8380_rtl8214fc_get_port(struct phy_device *phydev)
+static int rtl8214fc_get_port(struct phy_device *phydev)
 {
 	int addr = phydev->mdio.addr;
 
@@ -638,7 +635,7 @@ static int rtl8380_rtl8214fc_get_port(struct phy_device *phydev)
 	return PORT_MII;
 }
 
-static void rtl8380_rtl8218b_eee_set_u_boot(int port, bool enable)
+static void rtl8218b_eee_set_u_boot(int port, bool enable)
 {
 	u32 val;
 	bool an_enabled;
@@ -724,7 +721,7 @@ static void rtl8380_rtl8218b_eee_set(int port, bool enable)
 	write_phy(port, 0xa42, 29, 0);
 }
 
-static int rtl8380_rtl8218b_get_eee(struct phy_device *phydev,
+static int rtl8218b_get_eee(struct phy_device *phydev,
 				     struct ethtool_eee *e)
 {
 	u32 val;
@@ -735,7 +732,7 @@ static int rtl8380_rtl8218b_get_eee(struct phy_device *phydev,
 	/* Set GPHY page to copper */
 	write_phy(addr, 0xa42, 29, 0x0001);
 
-	rtl838x_read_mmd_phy(addr, 7, 60, &val);
+	rtl83xx_read_mmd_phy(addr, 7, 60, &val);
 	if (e->eee_enabled && (!!(val & (1 << 7))))
 		e->eee_enabled = !!(val & (1 << 7));
 	else
@@ -794,7 +791,7 @@ static int rtl8380_rtl8214fc_get_green(struct phy_device *phydev, struct ethtool
 	return 0;
 }
 
-static int rtl8380_rtl8214fc_set_eee(struct phy_device *phydev,
+static int rtl8214fc_set_eee(struct phy_device *phydev,
 				     struct ethtool_eee *e)
 {
 	u32 pollMask;
@@ -809,12 +806,12 @@ static int rtl8380_rtl8214fc_set_eee(struct phy_device *phydev,
 
 	pollMask = sw_r32(RTL838X_SMI_POLL_CTRL);
 	sw_w32(0, RTL838X_SMI_POLL_CTRL);
-	rtl8380_rtl8218b_eee_set_u_boot(addr, (bool) e->eee_enabled);
+	rtl8218b_eee_set_u_boot(addr, (bool) e->eee_enabled);
 	sw_w32(pollMask, RTL838X_SMI_POLL_CTRL);
 	return 0;
 }
 
-static int rtl8380_rtl8214fc_get_eee(struct phy_device *phydev,
+static int rtl8214fc_get_eee(struct phy_device *phydev,
 				      struct ethtool_eee *e)
 {
 	int addr = phydev->mdio.addr;
@@ -825,10 +822,10 @@ static int rtl8380_rtl8214fc_get_eee(struct phy_device *phydev,
 		return -ENOTSUPP;
 	}
 
-	return rtl8380_rtl8218b_get_eee(phydev, e);
+	return rtl8218b_get_eee(phydev, e);
 }
 
-static int rtl8380_rtl8218b_set_eee(struct phy_device *phydev,
+static int rtl8218b_set_eee(struct phy_device *phydev,
 				     struct ethtool_eee *e)
 {
 	u32 pollMask;
@@ -838,7 +835,7 @@ static int rtl8380_rtl8218b_set_eee(struct phy_device *phydev,
 
 	pollMask = sw_r32(RTL838X_SMI_POLL_CTRL);
 	sw_w32(0, RTL838X_SMI_POLL_CTRL);
-	rtl8380_rtl8218b_eee_set_u_boot(addr, (bool) e->eee_enabled);
+	rtl8218b_eee_set_u_boot(addr, (bool) e->eee_enabled);
 	sw_w32(pollMask, RTL838X_SMI_POLL_CTRL);
 
 	return 0;
@@ -914,9 +911,9 @@ static int rtl8380_configure_rtl8214fc(struct phy_device *phydev)
 
 	read_phy(mac, 0, 16, &val);
 	if (val & (1 << 11))
-		rtl8380_rtl8214fc_on_off(mac, true);
+		rtl8214fc_on_off(mac, true);
 	else
-		rtl8380_phy_reset(mac);
+		phy_reset(mac);
 
 	msleep(100);
 	write_phy(mac, 0, 30, 0x0001);
@@ -1347,12 +1344,12 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
 		.set_loopback	= genphy_loopback,
-		.read_mmd	= rtl8380_rtl8218b_read_mmd,
-		.write_mmd	= rtl8380_rtl8218b_write_mmd,
-		.set_port	= rtl8380_rtl8214fc_set_port,
-		.get_port	= rtl8380_rtl8214fc_get_port,
-		.set_eee	= rtl8380_rtl8214fc_set_eee,
-		.get_eee	= rtl8380_rtl8214fc_get_eee,
+		.read_mmd	= rtl8218b_read_mmd,
+		.write_mmd	= rtl8218b_write_mmd,
+		.set_port	= rtl8214fc_set_port,
+		.get_port	= rtl8214fc_get_port,
+		.set_eee	= rtl8214fc_set_eee,
+		.get_eee	= rtl8214fc_get_eee,
 	},
 	{
 		PHY_ID_MATCH_MODEL(PHY_ID_RTL8218B_E),
@@ -1363,10 +1360,10 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
 		.set_loopback	= genphy_loopback,
-		.read_mmd	= rtl8380_rtl8218b_read_mmd,
-		.write_mmd	= rtl8380_rtl8218b_write_mmd,
-		.set_eee	= rtl8380_rtl8218b_set_eee,
-		.get_eee	= rtl8380_rtl8218b_get_eee,
+		.read_mmd	= rtl8218b_read_mmd,
+		.write_mmd	= rtl8218b_write_mmd,
+		.set_eee	= rtl8218b_set_eee,
+		.get_eee	= rtl8218b_get_eee,
 	},
 	{
 		PHY_ID_MATCH_MODEL(PHY_ID_RTL8218B_I),
@@ -1376,10 +1373,10 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
 		.set_loopback	= genphy_loopback,
-		.read_mmd	= rtl8380_rtl8218b_read_mmd,
-		.write_mmd	= rtl8380_rtl8218b_write_mmd,
-		.set_eee	= rtl8380_rtl8218b_set_eee,
-		.get_eee	= rtl8380_rtl8218b_get_eee,
+		.read_mmd	= rtl8218b_read_mmd,
+		.write_mmd	= rtl8218b_write_mmd,
+		.set_eee	= rtl8218b_set_eee,
+		.get_eee	= rtl8218b_get_eee,
 	},
 	{
 		PHY_ID_MATCH_MODEL(PHY_ID_RTL8218B_I),
@@ -1389,8 +1386,8 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
 		.set_loopback	= genphy_loopback,
-		.read_mmd	= rtl8380_rtl8218b_read_mmd,
-		.write_mmd	= rtl8380_rtl8218b_write_mmd,
+		.read_mmd	= rtl8218b_read_mmd,
+		.write_mmd	= rtl8218b_write_mmd,
 		.read_status	= rtl8380_read_status,
 	},
 	{
@@ -1424,5 +1421,5 @@ static struct mdio_device_id __maybe_unused rtl83xx_tbl[] = {
 MODULE_DEVICE_TABLE(mdio, rtl83xx_tbl);
 
 MODULE_AUTHOR("B. Koblitz");
-MODULE_DESCRIPTION("RTL838x PHY driver");
+MODULE_DESCRIPTION("RTL83xx PHY driver");
 MODULE_LICENSE("GPL");
