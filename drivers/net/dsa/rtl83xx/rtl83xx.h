@@ -25,7 +25,9 @@ struct rtl83xx_mib_desc {
 };
 
 int rtl838x_smi_wait_op(int timeout);
+void __init rtl83xx_storm_control_init(struct rtl838x_switch_priv *priv);
 
+/* RTL838x-specific */
 u32 rtl838x_hash(struct rtl838x_switch_priv *priv, u64 seed);
 int rtl838x_read_phy(u32 port, u32 page, u32 reg, u32 *val);
 int rtl838x_write_phy(u32 port, u32 page, u32 reg, u32 val);
@@ -34,6 +36,7 @@ void rtl8380_get_version(struct rtl838x_switch_priv *priv);
 void rtl838x_vlan_profile_dump(int index);
 int rtl83xx_dsa_phy_read(struct dsa_switch *ds, int phy_addr, int phy_reg);
 
+/* RTL839x-specific */
 u32 rtl839x_hash(struct rtl838x_switch_priv *priv, u64 seed);
 int rtl839x_read_phy(u32 port, u32 page, u32 reg, u32 *val);
 int rtl839x_write_phy(u32 port, u32 page, u32 reg, u32 val);
