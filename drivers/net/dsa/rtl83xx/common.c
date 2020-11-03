@@ -98,7 +98,7 @@ static void rtl838x_storm_enable(struct rtl838x_switch_priv *priv, int port, boo
 }
 
 // TODO: unused
-static void rtl838x_storm_control_init(struct rtl838x_switch_priv *priv)
+static void __init rtl838x_storm_control_init(struct rtl838x_switch_priv *priv)
 {
 	int i;
 
@@ -203,8 +203,7 @@ static int rtl838x_mdio_write(struct mii_bus *bus, int addr, int regnum,
 	return rtl83xx_dsa_phy_write(priv->ds, addr, regnum, val);
 }
 
-// TODO: __init?
-int rtl8380_sds_power(int mac, int val)
+static int __init rtl8380_sds_power(int mac, int val)
 {
 	u32 mode = (val == 1) ? 0x4 : 0x9;
 	u32 offset = (mac == 24) ? 5 : 0;
@@ -221,9 +220,7 @@ int rtl8380_sds_power(int mac, int val)
 	return 0;
 }
 
-
-// TODO: __init?
-static int rtl838x_mdio_probe(struct rtl838x_switch_priv *priv)
+static int __init rtl838x_mdio_probe(struct rtl838x_switch_priv *priv)
 {
 	struct device *dev = priv->dev;
 	struct device_node *dn, *mii_np = dev->of_node;
@@ -323,7 +320,7 @@ static int rtl838x_mdio_probe(struct rtl838x_switch_priv *priv)
 	return 0;
 }
 
-static int rtl838x_get_l2aging(struct rtl838x_switch_priv *priv)
+static int __init rtl838x_get_l2aging(struct rtl838x_switch_priv *priv)
 {
 	int t = sw_r32(priv->r->l2_ctrl_1);
 
