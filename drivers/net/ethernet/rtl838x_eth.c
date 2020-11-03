@@ -125,8 +125,6 @@ inline void rtl839x_create_tx_header(struct p_hdr *h, int dest_port)
 	}
 }
 
-extern void rtl838x_fdb_sync(struct work_struct *work);
-
 struct rtl838x_eth_priv {
 	struct net_device *netdev;
 	struct platform_device *pdev;
@@ -228,6 +226,29 @@ struct fdb_update_work {
 	struct net_device *ndev;
 	u64 macs[NOTIFY_EVENTS + 1];
 };
+
+void rtl838x_fdb_sync(struct work_struct *work)
+{
+       const struct fdb_update_work *uw =
+               container_of(work, struct fdb_update_work, work);
+       struct switchdev_notifier_fdb_info info;
+       u8 addr[ETH_ALEN];
+       int i = 0;
+       int action;
+
+       while (uw->macs[i]) {
+               action = (uw->macs[i] & (1ULL << 63)) ? SWITCHDEV_FDB_ADD_TO_BRIDGE
+                               : SWITCHDEV_FDB_DEL_TO_BRIDGE;
+               u64_to_ether_addr(uw->macs[i] & 0xffffffffffffULL, addr);
+               info.addr = &addr[0];
+               info.vid = 0;
+               info.offloaded = 1;
+               pr_debug("FDB entry %d: %llx, action %d\n", i, uw->macs[0], action);
+               call_switchdev_notifiers(action, uw->ndev, &info.info, NULL);
+               i++;
+       }
+       kfree(work);
+}
 
 static void rtl839x_l2_notification_handler(struct rtl838x_eth_priv *priv)
 {
