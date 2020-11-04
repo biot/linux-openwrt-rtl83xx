@@ -617,7 +617,7 @@ static void rtl83xx_port_bridge_leave(struct dsa_switch *ds, int port,
 			if (priv->ports[i].enable)
 				priv->r->mask_port_reg_be(1ULL << port, 0,
 						       priv->r->port_iso_ctrl(i));
-			priv->ports[i].pm |= 1ULL << port;
+			priv->ports[i].pm &= ~(1ULL << port);
 
 			port_bitmap &= ~(1ULL << i);
 		}
