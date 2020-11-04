@@ -6,6 +6,7 @@
 #ifndef _MACH_RTL838X_H_
 #define _MACH_RTL838X_H_
 
+#include <asm/types.h>
 /*
  * Register access macros
  */
@@ -431,6 +432,11 @@ struct rtl838x_soc_info {
 	volatile void *icu_base;
 };
 
-void rtl838x_soc_detect(struct rtl838x_soc_info *i);
+/* rtl83xx-related functions used across subsystems */
+int rtl838x_smi_wait_op(int timeout);
+int rtl838x_read_phy(u32 port, u32 page, u32 reg, u32 *val);
+int rtl838x_write_phy(u32 port, u32 page, u32 reg, u32 val);
+int rtl839x_read_phy(u32 port, u32 page, u32 reg, u32 *val);
+int rtl839x_write_phy(u32 port, u32 page, u32 reg, u32 val);
 
 #endif   /* _MACH_RTL838X_H_ */
